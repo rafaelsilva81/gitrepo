@@ -1,6 +1,10 @@
 import Head from 'next/head';
+import api from '../lib/axios';
+import { useRouter } from 'next/router';
 
-export default function Home() {
+export default function Home({ repos }: { repos: Repository[] }) {
+  console.log(repos);
+  const router = useRouter();
   return (
     <>
       <Head>
@@ -18,9 +22,44 @@ export default function Home() {
           href='/favicon.ico'
         />
       </Head>
-      <main className='h-screen w-screen bg-neutral-900 items-center justify-center flex flex-col'>
-        <h1 className='text-6xl text-neutral-100'> Hello Tailwind! </h1>
+      <main className='flex flex-col items-center justify-center min-h-screen gap-1'>
+        <h1 className='text-5xl font-bold text-neutral-100'> GitRepos </h1>
+        <span className='text-gray-600 font-semibold text-xl mt-2'>
+          {repos.length} repositories, directly from Github API
+        </span>
+
+        <div className='grid grid-cols-3 mt-4 mx-16'>
+          {repos.map((repo) => (
+            <a
+              key={repo.id}
+              href={repo.html_url}
+              rel='noreferrer'
+              target='_blank'>
+              <div className='bg-neutral-800 rounded-lg shadow-lg p-4 m-2 h-36 flex flex-col justify-center hover:bg-sky-600 transition ease-in-out'>
+                <h2 className='text-2xl font-bold text-neutral-100 break-words'>
+                  {repo.full_name}
+                </h2>
+                <p className='text-neutral-100 text-ellipsis overflow-hidden'>
+                  {repo.description}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
       </main>
     </>
   );
 }
+
+export const getStaticProps = async () => {
+  const res = api.get('/repositories');
+
+  const { data } = await res;
+
+  return {
+    props: {
+      repos: data,
+    },
+    revalidate: 60 * 60 * 24, // 24 hours
+  };
+};
